@@ -40,9 +40,10 @@ public static class DataTableExtension
 
         foreach (var item in data)
         {
-            var row = table.NewRow();
+            DataRow row = table.NewRow();
             foreach (var prop in props)
-                row[prop.ColName()] = prop.GetValue(item) ?? DBNull.Value;
+                if (!prop.ColIgnore())
+                    row[prop.ColName()] = prop.GetValue(item) ?? DBNull.Value;
             table.Rows.Add(row);
         }
 
@@ -51,12 +52,31 @@ public static class DataTableExtension
 
     private static string ColName(this PropertyInfo prop)
     {
-        var column = (ExcelColumn?)Attribute.GetCustomAttribute(prop, typeof(ExcelColumn));
-        if (column != null)
-            return column.Name;
-        return prop.Name;
+        try
+        {
+            var column = (ExcelColumn)Attribute.GetCustomAttribute(prop, typeof(ExcelColumn));
+            return column != null ? column.Name : prop.Name;
+        }
+        catch
+        {
+            return prop.Name;
+        }
+    }
+
+    private static bool ColIgnore(this PropertyInfo prop)
+    {
+        try
+        {
+            var column = (ExcelColumn)Attribute.GetCustomAttribute(prop, typeof(ExcelColumn));
+            return column != null && column.Ignore;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
+
 
 public class DataTableExporter
 {
@@ -113,4 +133,6 @@ sealed class ExcelColumn : Attribute
 {
 
     public string Name { get; set; } = null!;
+
+    public bool Igonre = {get;set;} = false;
 }
