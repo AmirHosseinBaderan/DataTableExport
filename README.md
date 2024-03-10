@@ -59,6 +59,20 @@ set value with row index and column name
 ## SetCellValue(int row, int column, object value)
 set value with row index and column index 
 
+# Export excel for download 
+
+``` Csharp
+
+ var workbook = dataTable.ExportFromDataTable("Sheet Name");
+ MemoryStream stream = await workbook.ExportToSteamAsync();
+ var contentType = workbook.GetType() == typeof(XSSFWorkbook)
+         ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+         : "application/vnd.ms-excel";
+ return File(stream.ToArray(), contentType, fileDownloadName:
+                 $"InvoiceList {DateTime.Now} {((workbook.GetType() == typeof(XSSFWorkbook)) ? ".xlsx" : ".xls")}");
+
+```
+
 ## Export()
 create data table export at final
 
