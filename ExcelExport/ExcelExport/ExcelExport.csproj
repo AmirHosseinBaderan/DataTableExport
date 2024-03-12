@@ -4,6 +4,15 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>disable</Nullable>
+		<Title>FTeam.ExcelExporter</Title>
+		<PackageProjectUrl>https://github.com/AmirHosseinBaderan/DataTableExport</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/AmirHosseinBaderan/DataTableExport</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>excel datatable</PackageTags>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Authors>FTeam</Authors>
+		<Product>FTeam.ExcelExporter</Product>
+		<AssemblyName>FTeam.ExcelExporter</AssemblyName>
 	</PropertyGroup>
 
 	<ItemGroup>
