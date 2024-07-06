@@ -13,7 +13,7 @@ public static class ExcelExtension
     public static IEnumerable<T> ReadExcel<T>(this IFormFile file) where T : new()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        IEnumerable<T> result = [];
+        List<T> result = new();
 
         using (Stream stream = file.OpenReadStream())
         using (IExcelDataReader reader = ExcelReaderFactory.CreateReader(stream, new ExcelReaderConfiguration
@@ -32,7 +32,7 @@ public static class ExcelExtension
 
     static List<T> ReadFromDataTable<T>(this DataTable table) where T : new()
     {
-        List<T> result = [];
+        List<T> result = new();
         PropertyInfo[] props = typeof(T).GetProperties();
         foreach (DataRow row in table.Rows)
         {
@@ -92,7 +92,7 @@ public static class ExcelExtension
         using StreamReader reader = new(stream);
         DataSet dataSet = new();
         dataSet.ReadXml(stream);
-        List<T> result = [];
+        List<T> result = new();
         foreach (DataTable item in dataSet.Tables)
         {
             var res = item.ReadFromDataTable<T>();

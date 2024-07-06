@@ -3,19 +3,27 @@ using Microsoft.AspNetCore.Http.Internal;
 
 namespace ExcelExport.Import;
 
-public class MemoryFormFile(MemoryStream stream,
+public class MemoryFormFile
+{
+    private readonly MemoryStream _stream;
+    private readonly string _contentType;
+    private readonly string _fileName;
+
+    public MemoryFormFile(MemoryStream stream,
                       string contentType,
                       string fileName)
-{
-    private readonly MemoryStream _stream = stream;
-    private readonly string _contentType = contentType;
+    {
+        _stream = stream;
+        _contentType = contentType;
+        _fileName = fileName;
+    }
 
     public string ContentType => _contentType;
     public string ContentDisposition => $"form-data; name=\"{Name}\"; filename=\"{FileName}\"";
     public IHeaderDictionary Headers => new HeaderDictionary();
-    public long Length { get; } = stream.Length;
-    public string Name { get; } = fileName;
-    public string FileName { get; } = fileName;
+    public long Length { get => _stream.Length; }
+    public string Name { get => _fileName; }
+    public string FileName { get => _fileName; }
 
     public void CopyTo(Stream target)
     {
