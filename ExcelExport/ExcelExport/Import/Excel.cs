@@ -1,4 +1,5 @@
 ﻿using ExcelDataReader;
+using ExcelExport.Import;
 using Microsoft.AspNetCore.Http;
 using System.Data;
 using System.Reflection;
@@ -116,5 +117,14 @@ public static class ExcelExtension
             return file.ReadXml<T>();
 
         return file.ReadExcel<T>();
+    }
+
+    public static IEnumerable<T> ReadFromFile<T>(this string dataUrl) where T : new()
+    {
+        if (string.IsNullOrEmpty(dataUrl))
+            return default;
+
+        var file = dataUrl.ToMemoryFormFile();
+        return file.ToFormFile().ReadFromFile<T>();
     }
 }
