@@ -13,10 +13,12 @@
 		<Authors>FTeam</Authors>
 		<Product>FTeam.ExcelExporter</Product>
 		<AssemblyName>FTeam.ExcelExporter</AssemblyName>
+		<Version>1.1.0</Version>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="ExcelDataReader" Version="3.6.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Http" Version="2.2.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
 		<PackageReference Include="NPOI" Version="2.6.2" />
