@@ -13,9 +13,14 @@ public static class ExcelExtension
     public static IEnumerable<T> ReadExcel<T>(this IFormFile file) where T : new()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        using Stream stream = file.OpenReadStream();
+        return ReadExcel<T>(stream);
+    }
+
+    public static IEnumerable<T> ReadExcel<T>(this Stream stream) where T : new()
+    {
         List<T> result = new();
 
-        using (Stream stream = file.OpenReadStream())
         using (IExcelDataReader reader = ExcelReaderFactory.CreateReader(stream, new ExcelReaderConfiguration
         {
             FallbackEncoding = Encoding.UTF8,
@@ -26,7 +31,6 @@ public static class ExcelExtension
             DataTable dataTable = dataSet.Tables[0];
             result = dataTable.ReadFromDataTable<T>();
         }
-
         return result;
     }
 
@@ -63,9 +67,14 @@ public static class ExcelExtension
     public static IEnumerable<T> ReadCsv<T>(this IFormFile file) where T : new()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        using var stream = file.OpenReadStream();
+        return stream.ReadCsv<T>();
+    }
+
+    public static IEnumerable<T> ReadCsv<T>(this Stream stream) where T : new()
+    {
         DataTable dataTable = new();
-        using var steam = file.OpenReadStream();
-        using StreamReader reader = new(steam, Encoding.UTF8, true);
+        using StreamReader reader = new(stream, Encoding.UTF8, true);
         string[] lines = reader.ReadToEnd().Split('\n');
 
         if (lines.Length > 0)
@@ -89,6 +98,11 @@ public static class ExcelExtension
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         using Stream stream = file.OpenReadStream();
+        return stream.ReadXml<T>();
+    }
+
+    public static IEnumerable<T> ReadXml<T>(this Stream stream) where T : new()
+    {
         using StreamReader reader = new(stream);
         DataSet dataSet = new();
         dataSet.ReadXml(stream);
@@ -124,7 +138,16 @@ public static class ExcelExtension
         if (string.IsNullOrEmpty(dataUrl))
             return default;
 
-        var file = dataUrl.ToMemoryFormFile();
-        return file.ToFormFile().ReadFromFile<T>();
+        var file = dataUrl.ToStream();
+        var (contentType, extension) = dataUrl.GetContentType();
+
+        if (extension == ".csv" || extension == ".txt")
+            return file.ReadCsv<T>();
+        else if (extension == ".xlsx" || extension == ".xls" || extension == ".xlsm")
+            return file.ReadExcel<T>();
+        else if (extension == ".xml")
+            return file.ReadXml<T>();
+
+        return file.ReadExcel<T>();
     }
 }
