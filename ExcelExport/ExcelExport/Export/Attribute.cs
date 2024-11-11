@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace FTeam.Excel.Export;
+﻿namespace FTeam.Excel.Export;
 
 [AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
 public class ExcelColumn : Attribute
