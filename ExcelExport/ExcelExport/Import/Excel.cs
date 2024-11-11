@@ -81,8 +81,13 @@ public static class ExcelExtension
 
                     });
 
-                    if (prop != null && row[column] != DBNull.Value)
-                        prop.SetValue(obj, row[column]);
+                    if (prop is not null && row[column] != DBNull.Value)
+                    {
+                        ExcelColumn attr = prop.GetCustomAttribute<ExcelColumn>();
+                        Type convertType = attr is null || attr.Type is null ? prop.PropertyType : attr.Type;
+                        object convertedValue = Convert.ChangeType(row[column], convertType);
+                        prop.SetValue(obj, convertedValue);
+                    }
                 }
                 catch
                 {
