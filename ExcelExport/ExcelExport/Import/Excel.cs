@@ -1,5 +1,6 @@
 ﻿using ExcelDataReader;
 using ExcelExport.Import;
+using FTeam.Excel.Export;
 using Microsoft.AspNetCore.Http;
 using System.Data;
 using System.Reflection;
@@ -28,10 +29,29 @@ public static class ExcelExtension
         }))
         {
             DataSet dataSet = reader.AsDataSet();
-            DataTable dataTable = dataSet.Tables[0];
+            DataTable dataTable = dataSet.ExportDataTable();
             result = dataTable.ReadFromDataTable<T>();
         }
         return result;
+    }
+
+    static DataTable ExportDataTable(this DataSet dataSet)
+    {
+        // Get DataTable from data set 
+        DataTable table = dataSet.Tables[0];
+
+        // Get first row of table
+        var firstRow = table.Rows[0];
+        // Declare columns names 
+        List<string> columnNames = new();
+        foreach (var cell in firstRow.ItemArray)
+            columnNames.Add(cell.ToString());
+
+        table.Rows.Remove(firstRow);
+        for (int i = 0; i < table.Columns.Count; i++)
+            table.Columns[i].ColumnName = columnNames[i];
+
+        return table;
     }
 
     static List<T> ReadFromDataTable<T>(this DataTable table) where T : new()
@@ -48,8 +68,18 @@ public static class ExcelExtension
             {
                 try
                 {
-                    string propertyName = column.ColumnName; // Adjust property name mapping
-                    var prop = props.FirstOrDefault(p => string.Equals(p.Name, propertyName, StringComparison.OrdinalIgnoreCase));
+                    string propertyName = column.ColumnName;
+                    PropertyInfo prop = props.FirstOrDefault((p) =>
+                    {
+                        var attr = p.GetCustomAttribute<ExcelColumn>();
+                        if (attr is null)
+                            return p.Name.Equals(propertyName, StringComparison.CurrentCultureIgnoreCase);
+                        if (attr.Ignore)
+                            return false;
+                        else
+                            return propertyName.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase);
+
+                    });
 
                     if (prop != null && row[column] != DBNull.Value)
                         prop.SetValue(obj, row[column]);

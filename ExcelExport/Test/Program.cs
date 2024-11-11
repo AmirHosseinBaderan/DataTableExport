@@ -1,59 +1,44 @@
-﻿using ClosedXML.Excel;
-using ExcelExport.Import;
-using System.Reflection;
+﻿using FTeam.Excel.Export;
+using FTeam.Excel.Import;
+using System.Text;
+using static System.Console;
 
-var data = Data.base64.ReadDataUrl();
-var workBook = LoadExcelFromBytes(data.buffer);
-var items = ConvertXLWorkbookToModel<CentralWarehouseExcel>(workBook);
+Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-Console.WriteLine(items.Count);
+string? path = null;
 
-XLWorkbook LoadExcelFromBytes(byte[] excelBytes)
+while (path is null)
 {
-    using MemoryStream ms = new(excelBytes);
-    return new XLWorkbook(ms);
+    Write("Enter Excel Path : ");
+    path = ReadLine();
 }
 
+FileStream fs = new(path, FileMode.Open, FileAccess.Read);
+var items = fs.ReadExcel<ProductExcelModel>();
+foreach (var item in items)
+    WriteLine(item);
 
-List<T> ConvertXLWorkbookToModel<T>(XLWorkbook workbook) where T : new()
+
+public record ProductExcelModel
 {
-    var modelList = new List<T>();
+    [ExcelColumn(Name = "عنوان")]
+    public string Name { get; set; }
 
-    // Assuming you want to read the first worksheet (index 0)
-    var worksheet = workbook.Worksheets.FirstOrDefault();
-    if (worksheet is null)
-        return [];
-
-    var range = worksheet.RangeUsed();
-
-    // Start reading from row 2 (assuming row 1 contains headers)
-    for (int row = 2; row <= range.RowCount(); row++)
-    {
-        var model = new T();
-
-        // Get the properties of the model using reflection
-        PropertyInfo[] properties = typeof(T).GetProperties();
-
-        // Assuming columns in the Excel sheet match property names
-        for (int col = 1; col <= properties.Length; col++)
-        {
-            var cellValue = worksheet.Cell(row, col).Value.ToString();
-            properties[col - 1].SetValue(model, Convert.ChangeType(cellValue, properties[col - 1].PropertyType));
-        }
-
-        modelList.Add(model);
-    }
-
-    return modelList;
-}
-
-public record CentralWarehouseExcel
-{
-    public string ProductName { get; set; }
-
+    [ExcelColumn(Name = "بارکد")]
     public string Barcode { get; set; }
 
-    public string Group { get; set; }
+    [ExcelColumn(Name = "شناسه یکتا")]
+    public string Identifire { get; set; }
 
-    public string SubGroup { get; set; }
+    [ExcelColumn(Name = "واحد")]
+    public string Unit { get; set; }
+
+    [ExcelColumn(Name = "مالیات")]
+    public string Taxes { get; set; }
+
+    [ExcelColumn(Name = "قیمت")]
+    public string Price { get; set; }
+
+    [ExcelColumn(Name = "دسته بندی")]
+    public string Category { get; set; }
 }
