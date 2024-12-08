@@ -8,4 +8,6 @@ public class ExcelColumn : Attribute
     public bool Ignore { get; set; } = false;
 
     public Type Type { get; set; }
+
+    public bool Required { get; set; }
 }
