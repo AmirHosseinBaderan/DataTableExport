@@ -18,6 +18,9 @@ var items = fs.ReadExcel<ProductExcelModel>();
 foreach (var item in items)
     WriteLine(item);
 
+IEnumerable<ProductExcelModel> items2 = fs.ReadExcel<ProductExcelModel>(x => !string.IsNullOrEmpty(x.Name) && x.Barcode != "00");
+foreach (var item2 in items2)
+    WriteLine(item2);
 
 public record ProductExcelModel
 {
@@ -41,4 +44,7 @@ public record ProductExcelModel
 
     [ExcelColumn(Name = "دسته بندی")]
     public string Category { get; set; }
+
+    [ExcelColumn(Name = "زیر دسته بندی")]
+    public string SubCategory { get; set; }
 }
