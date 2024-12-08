@@ -18,6 +18,13 @@ public static class ExcelExtension
         return ReadExcel<T>(stream, validator);
     }
 
+    public static IEnumerable<T> ReadExcel<T>(this IFormFile file, Func<T, bool>? validator) where T : new()
+    {
+        Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        using Stream stream = file.OpenReadStream();
+        return ReadExcel(stream, validator);
+    }
+
     public static IEnumerable<T> ReadExcel<T>(this Stream stream, bool validator = false) where T : new()
     {
         List<T> result = new();
@@ -29,30 +36,128 @@ public static class ExcelExtension
         }))
         {
             DataSet dataSet = reader.AsDataSet();
-            DataTable dataTable = dataSet.ExportDataTable();
+            DataTable dataTable = dataSet.ExportDataTable<T>();
             result = dataTable.ReadFromDataTable<T>(validator);
         }
         return result;
     }
 
-    static DataTable ExportDataTable(this DataSet dataSet)
+    public static IEnumerable<T> ReadExcel<T>(this Stream stream, Func<T, bool>? validator) where T : new()
+    {
+        List<T> result = new();
+
+        using (IExcelDataReader reader = ExcelReaderFactory.CreateReader(stream, new ExcelReaderConfiguration
+        {
+            FallbackEncoding = Encoding.UTF8,
+            LeaveOpen = true,
+        }))
+        {
+            DataSet dataSet = reader.AsDataSet();
+            DataTable dataTable = dataSet.ExportDataTable<T>();
+            result = dataTable.ReadFromDataTable(validator);
+        }
+        return result;
+    }
+
+    static DataTable ExportDataTable<TModel>(this DataSet dataSet) where TModel : new()
     {
         // Get DataTable from data set 
         DataTable table = dataSet.Tables[0];
 
-        // Get first row of table
-        var firstRow = table.Rows[0];
-        // Declare columns names 
-        List<string> columnNames = new();
-        foreach (var cell in firstRow.ItemArray)
-            columnNames.Add(cell?.ToString() ?? "");
+        // Create a new DataTable
+        DataTable newTable = new DataTable();
 
-        table.Rows.Remove(firstRow);
-        for (int i = 0; i < table.Columns.Count; i++)
-            table.Columns[i].ColumnName = columnNames[i];
+        // Get the properties of the model
+        PropertyInfo[] props = typeof(TModel).GetProperties();
 
-        return table;
+        // Add columns to the new DataTable based on the model properties
+        foreach (var prop in props)
+        {
+            var attr = prop.GetCustomAttribute<ExcelColumn>();
+            if (attr != null && attr.Ignore)
+                continue;
+
+            string columnName = attr?.Name ?? prop.Name;
+            Type columnType = attr?.Type ?? prop.PropertyType;
+
+            newTable.Columns.Add(columnName, Nullable.GetUnderlyingType(columnType) ?? columnType);
+        }
+
+        // Populate the new DataTable with rows from the original DataTable
+        foreach (DataRow row in table.Rows)
+        {
+            DataRow newRow = newTable.NewRow();
+            foreach (var prop in props)
+            {
+                var attr = prop.GetCustomAttribute<ExcelColumn>();
+                if (attr != null && attr.Ignore)
+                    continue;
+
+                string columnName = attr?.Name ?? prop.Name;
+                if (table.Columns.Contains(columnName) && row[columnName] != DBNull.Value)
+                {
+                    newRow[columnName] = row[columnName];
+                }
+            }
+            newTable.Rows.Add(newRow);
+        }
+
+        return newTable;
     }
+
+    public static List<T> ReadFromDataTable<T>(this DataTable table, Func<T, bool>? validator) where T : new()
+    {
+        List<T> result = new();
+        PropertyInfo[] props = typeof(T).GetProperties();
+
+        foreach (DataRow row in table.Rows)
+        {
+            T? obj = row.ConvertRowToModel<T>(table.Columns, props);
+            if (obj is not null)
+                // Apply the validator if provided
+                if (validator == null || validator(obj))
+                    result.Add(obj);
+        }
+        return result;
+    }
+
+    static T? ConvertRowToModel<T>(this DataRow row, DataColumnCollection dataColumn, PropertyInfo[] props) where T : new()
+    {
+        T? obj = new();
+
+        // Map properties from DataRow to object properties
+        foreach (DataColumn column in dataColumn)
+        {
+            try
+            {
+                string propertyName = column.ColumnName;
+                PropertyInfo? prop = props.FirstOrDefault((p) =>
+                {
+                    var attr = p.GetCustomAttribute<ExcelColumn>();
+                    if (attr is null)
+                        return p.Name.Equals(propertyName, StringComparison.CurrentCultureIgnoreCase);
+                    if (attr.Ignore)
+                        return false;
+                    else
+                        return propertyName.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase);
+                });
+
+                if (prop is not null && row[column] != DBNull.Value)
+                {
+                    ExcelColumn? attr = prop.GetCustomAttribute<ExcelColumn>();
+                    Type convertType = attr is null || attr.Type is null ? prop.PropertyType : attr.Type;
+                    object convertedValue = Convert.ChangeType(row[column], convertType);
+                    prop.SetValue(obj, convertedValue);
+                }
+            }
+            catch
+            {
+                obj = default;
+            }
+        }
+        return obj;
+    }
+
 
     static List<T> ReadFromDataTable<T>(this DataTable table, bool validator = false) where T : new()
     {
@@ -64,43 +169,9 @@ public static class ExcelExtension
 
         foreach (DataRow row in table.Rows)
         {
-            T obj = new();
-
-            // Map properties from DataRow to object properties
-            foreach (DataColumn column in table.Columns)
-            {
-                try
-                {
-                    string propertyName = column.ColumnName;
-                    PropertyInfo? prop = props.FirstOrDefault((p) =>
-                    {
-                        var attr = p.GetCustomAttribute<ExcelColumn>();
-                        if (attr is null)
-                            return p.Name.Equals(propertyName, StringComparison.CurrentCultureIgnoreCase);
-                        if (attr.Ignore)
-                            return false;
-                        else
-                            return propertyName.Equals(attr.Name, StringComparison.CurrentCultureIgnoreCase);
-
-                    });
-
-                    if (prop is not null && row[column] != DBNull.Value)
-                    {
-                        ExcelColumn? attr = prop.GetCustomAttribute<ExcelColumn>();
-                        Type convertType = attr is null || attr.Type is null ? prop.PropertyType : attr.Type;
-                        object convertedValue = Convert.ChangeType(row[column], convertType);
-                        prop.SetValue(obj, convertedValue);
-                    }
-                }
-                catch
-                {
-                }
-            }
-            if (validator != null)
-            {
-
-            }
-            result.Add(obj);
+            T? obj = row.ConvertRowToModel<T>(table.Columns, props);
+            if (obj is not null)
+                result.Add(obj);
         }
         return result;
     }
