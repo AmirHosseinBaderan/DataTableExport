@@ -11,14 +11,14 @@ namespace FTeam.Excel.Import;
 public static class ExcelExtension
 {
 
-    public static IEnumerable<T> ReadExcel<T>(this IFormFile file) where T : new()
+    public static IEnumerable<T> ReadExcel<T>(this IFormFile file, bool validator = false) where T : new()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         using Stream stream = file.OpenReadStream();
-        return ReadExcel<T>(stream);
+        return ReadExcel<T>(stream, validator);
     }
 
-    public static IEnumerable<T> ReadExcel<T>(this Stream stream) where T : new()
+    public static IEnumerable<T> ReadExcel<T>(this Stream stream, bool validator = false) where T : new()
     {
         List<T> result = new();
 
@@ -30,7 +30,7 @@ public static class ExcelExtension
         {
             DataSet dataSet = reader.AsDataSet();
             DataTable dataTable = dataSet.ExportDataTable();
-            result = dataTable.ReadFromDataTable<T>();
+            result = dataTable.ReadFromDataTable<T>(validator);
         }
         return result;
     }
@@ -45,7 +45,7 @@ public static class ExcelExtension
         // Declare columns names 
         List<string> columnNames = new();
         foreach (var cell in firstRow.ItemArray)
-            columnNames.Add(cell.ToString());
+            columnNames.Add(cell?.ToString() ?? "");
 
         table.Rows.Remove(firstRow);
         for (int i = 0; i < table.Columns.Count; i++)
@@ -54,13 +54,16 @@ public static class ExcelExtension
         return table;
     }
 
-    static List<T> ReadFromDataTable<T>(this DataTable table) where T : new()
+    static List<T> ReadFromDataTable<T>(this DataTable table, bool validator = false) where T : new()
     {
         List<T> result = new();
         PropertyInfo[] props = typeof(T).GetProperties();
+
+        if (validator && !table.ValidateColumnNames<T>(out List<string> validationErrors))
+            ValidationException.Throw(validationErrors);
+
         foreach (DataRow row in table.Rows)
         {
-
             T obj = new();
 
             // Map properties from DataRow to object properties
@@ -69,7 +72,7 @@ public static class ExcelExtension
                 try
                 {
                     string propertyName = column.ColumnName;
-                    PropertyInfo prop = props.FirstOrDefault((p) =>
+                    PropertyInfo? prop = props.FirstOrDefault((p) =>
                     {
                         var attr = p.GetCustomAttribute<ExcelColumn>();
                         if (attr is null)
@@ -83,7 +86,7 @@ public static class ExcelExtension
 
                     if (prop is not null && row[column] != DBNull.Value)
                     {
-                        ExcelColumn attr = prop.GetCustomAttribute<ExcelColumn>();
+                        ExcelColumn? attr = prop.GetCustomAttribute<ExcelColumn>();
                         Type convertType = attr is null || attr.Type is null ? prop.PropertyType : attr.Type;
                         object convertedValue = Convert.ChangeType(row[column], convertType);
                         prop.SetValue(obj, convertedValue);
@@ -93,7 +96,10 @@ public static class ExcelExtension
                 {
                 }
             }
+            if (validator != null)
+            {
 
+            }
             result.Add(obj);
         }
         return result;

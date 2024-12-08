@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFrameworks>net8.0;net7.0;net6.0</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>disable</Nullable>
+		<Nullable>enable</Nullable>
 		<Title>FTeam.ExcelExporter</Title>
 		<PackageProjectUrl>https://github.com/AmirHosseinBaderan/DataTableExport</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/AmirHosseinBaderan/DataTableExport</RepositoryUrl>
