@@ -30,7 +30,7 @@ public static class ColumnValidator
 
         // Check if all DataTable columns match the model properties
         foreach (DataColumn column in table.Columns)
-            if (!propertyNames.Select(x => x.name)
+            if (!propertyNames.Where(x => x.required == true).Select(x => x.name)
                  .Contains(column.ColumnName, StringComparer.CurrentCultureIgnoreCase))
                 errors.Add($"Column '{column.ColumnName}' does not match any property in the model.");
 
