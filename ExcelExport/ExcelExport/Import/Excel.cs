@@ -1,4 +1,5 @@
 ﻿using ExcelDataReader;
+using ExcelExport.Export;
 using ExcelExport.Import;
 using FTeam.Excel.Export;
 using Microsoft.AspNetCore.Http;
@@ -35,7 +36,7 @@ public static class ExcelExtension
             LeaveOpen = true,
         }))
         {
-            DataSet dataSet = reader.AsDataSet();
+            DataSet dataSet = reader.ExportAsDataSet();
             DataTable dataTable = dataSet.ExportDataTable<T>();
             result = dataTable.ReadFromDataTable<T>(validator);
         }
@@ -52,7 +53,7 @@ public static class ExcelExtension
             LeaveOpen = true,
         }))
         {
-            DataSet dataSet = reader.AsDataSet();
+            DataSet dataSet = reader.ExportAsDataSet();
             DataTable dataTable = dataSet.ExportDataTable<T>();
             result = dataTable.ReadFromDataTable(validator);
         }
@@ -96,7 +97,21 @@ public static class ExcelExtension
                 string columnName = attr?.Name ?? prop.Name;
                 if (table.Columns.Contains(columnName) && row[columnName] != DBNull.Value)
                 {
-                    newRow[columnName] = row[columnName];
+                    try
+                    {
+                        newRow[columnName] = row[columnName];
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            newRow[columnName] = Convert.ChangeType(row[columnName], prop.PropertyType);
+                        }
+                        catch
+                        {
+
+                        }
+                    }
                 }
             }
             newTable.Rows.Add(newRow);
