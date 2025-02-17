@@ -7,14 +7,11 @@ public static class DataSetExtensions
 {
     public static DataSet ExportAsDataSet(this IExcelDataReader self, ExcelDataSetConfiguration configuration = null)
     {
-        if (configuration == null)
-        {
-            configuration = new ExcelDataSetConfiguration();
-        }
+        configuration ??= new ExcelDataSetConfiguration();
 
         self.Reset();
         int sheetIndex = -1;
-        DataSet dataSet = new DataSet();
+        DataSet dataSet = new();
         do
         {
             sheetIndex++;
@@ -61,43 +58,33 @@ public static class DataSetExtensions
             if (isFirstRow)
             {
                 if (configuration.UseHeaderRow && configuration.ReadHeaderRow != null)
-                {
                     configuration.ReadHeaderRow(self);
-                }
+
 
                 for (int i = 0; i < self.FieldCount; i++)
-                {
                     if (configuration.FilterColumn == null || configuration.FilterColumn(self, i))
                     {
                         string columnName = Convert.ToString(self.GetValue(i));
                         if (string.IsNullOrEmpty(columnName))
-                        {
                             columnName = configuration.EmptyColumnNamePrefix + i;
-                        }
 
                         DataColumn column = new DataColumn(GetUniqueColumnName(dataTable, columnName), typeof(object)) { Caption = columnName };
                         dataTable.Columns.Add(column);
                         columnIndexes.Add(i);
                     }
-                }
+
 
                 dataTable.BeginLoadData();
                 isFirstRow = false;
                 if (configuration.UseHeaderRow)
-                {
                     continue;
-                }
             }
 
             if (configuration.FilterRow != null && !configuration.FilterRow(self))
-            {
                 continue;
-            }
 
             if (IsEmptyRow(self))
-            {
                 continue;
-            }
 
             DataRow dataRow = dataTable.NewRow();
             for (int j = 0; j < columnIndexes.Count; j++)

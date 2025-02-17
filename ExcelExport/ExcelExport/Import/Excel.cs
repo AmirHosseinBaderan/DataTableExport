@@ -182,8 +182,14 @@ public static class ExcelExtension
         if (validator && !table.ValidateColumnNames<T>(out List<string> validationErrors))
             ValidationException.Throw(validationErrors);
 
+        bool isFirst = true;
         foreach (DataRow row in table.Rows)
         {
+            if (isFirst)
+            {
+                isFirst = false;
+                continue;
+            }
             T? obj = row.ConvertRowToModel<T>(table.Columns, props);
             if (obj is not null)
                 result.Add(obj);

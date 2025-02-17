@@ -87,20 +87,20 @@ public class UserCompanyViewModel
     public string? UserCompanyTelephone { get; set; }
 
     [ExcelColumn(Name = "نوع شرکت")]
-    public long? CompanyTypeId { get; set; }
+    public string? CompanyTypeId { get; set; }
 
     [ExcelColumn(Name = "شماره ثبت")]
     public string? UserCompanyRegisterNumber { get; set; }
 
     [ExcelColumn(Name = "استان")]
-    public long? UserCompanyProvince { get; set; }
+    public string? UserCompanyProvince { get; set; }
 
     [ExcelColumn(Name = "شهر")]
-    public long? UserCompanyCity { get; set; }
+    public string? UserCompanyCity { get; set; }
 
     [ExcelColumn(Name = "وضعیت")]
     public string? UserCompanyStatus { get; set; }
 
     [ExcelColumn(Name = "نوع مودی")]
-    public int UserCompanyType { get; set; }
+    public string? UserCompanyType { get; set; }
 }
