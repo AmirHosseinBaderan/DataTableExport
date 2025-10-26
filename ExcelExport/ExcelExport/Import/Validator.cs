@@ -21,32 +21,32 @@ public static class ColumnValidator
                 var nullable = p.IsNullable();
                 return (p.Name, !nullable, false);
             }
+
             if (attr.Ignore)
                 return ("", false, true);
             var name = attr.Name;
             return (name, attr.Required, false);
         }).ToList();
+
+        // Only keep properties that are not ignored and have a valid name
         propertyNames = propertyNames.Where(x => !string.IsNullOrEmpty(x.name) && !x.ignore).ToList();
 
-        // Check if all DataTable columns match the model properties
-        foreach (DataColumn column in table.Columns)
-            if (!propertyNames.Where(x => x.required == true).Select(x => x.name)
-                 .Contains(column.ColumnName, StringComparer.CurrentCultureIgnoreCase))
-                errors.Add($"Column '{column.ColumnName}' does not match any property in the model.");
+        // Check that all **required properties** exist in the DataTable columns
+        foreach (var prop in propertyNames.Where(x => x.required))
+            if (!table.Columns.Contains(prop.name))
+                errors.Add($"Required column '{prop.name}' is missing from the Excel file.");
+
 
         return errors.Count == 0;
     }
 
     public static bool IsNullable(this PropertyInfo property)
     {
-        // Check if the property type is a reference type or a Nullable<T>
+        // Reference types are nullable
         if (!property.PropertyType.IsValueType)
-        {
-            return true; // Reference types are nullable
-        }
+            return true;
 
-        // Check if the property type is a Nullable<T>
+        // Nullable<T> types
         return Nullable.GetUnderlyingType(property.PropertyType) != null;
     }
-
 }
