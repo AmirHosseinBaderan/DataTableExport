@@ -25,19 +25,19 @@ foreach (var item in items)
 
 public record ProductExcelModel
 {
-    [ExcelColumn(Name = "عنوان")] public string Name { get; set; }
+    [ExcelColumn(Name = "عنوان",Required = true)] public string Name { get; set; }
 
-    [ExcelColumn(Name = "بارکد")] public string Barcode { get; set; }
+    [ExcelColumn(Name = "بارکد",Required = true)] public string Barcode { get; set; }
 
-    [ExcelColumn(Name = "شناسه یکتا")] public string Identifire { get; set; }
+    [ExcelColumn(Name = "شناسه یکتا",Required = true)] public string Identifire { get; set; }
 
-    [ExcelColumn(Name = "واحد")] public string Unit { get; set; }
+    [ExcelColumn(Name = "واحد",Required = true)] public string Unit { get; set; }
 
-    [ExcelColumn(Name = "مالیات")] public string Taxes { get; set; }
+    [ExcelColumn(Name = "مالیات",Required = true)] public string Taxes { get; set; }
 
-    [ExcelColumn(Name = "قیمت")] public string Price { get; set; }
+    [ExcelColumn(Name = "قیمت",Required = true)] public string Price { get; set; }
 
-    [ExcelColumn(Name = "دسته بندی")] public string Category { get; set; }
+    [ExcelColumn(Name = "دسته بندی",Required = true)] public string Category { get; set; }
 
-    [ExcelColumn(Name = "زیر دسته بندی")] public string SubCategory { get; set; }
+    [ExcelColumn(Name = "زیردسته بندی")] public string SubCategory { get; set; }
 }
